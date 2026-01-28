@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lista de Casa Nova</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 0; background: #faf7fb; color: #1f1a24; }
+    header { padding: 18px 16px; background: #ffffff; position: sticky; top: 0; border-bottom: 1px solid #eee; }
+    h1 { margin: 0 0 10px; font-size: 18px; }
+    .topbar { display: grid; gap: 10px; grid-template-columns: 1fr; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    input[type="search"] { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; }
+    button {
+      padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px;
+      background: #fff; cursor: pointer;
+    }
+    button:hover { background: #f6f6f6; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+    .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .card { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 14px; }
+    h2 { margin: 0 0 10px; font-size: 16px; }
+    .meta { font-size: 13px; color: #5a5263; margin-bottom: 10px; }
+    .item { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }
+    .item input { margin-top: 2px; transform: scale(1.15); }
+    .item label { line-height: 1.25; }
+    .muted { color: #6b6476; font-size: 13px; }
+    .progress {
+      height: 10px; background: #efeaf2; border-radius: 999px; overflow: hidden; width: 180px;
+      border: 1px solid #eee;
+    }
+    .bar { height: 100%; width: 0%; background: #b07adf; }
+    .footer { padding: 24px 16px 40px; text-align: center; color: #6b6476; }
+    .pill { font-size: 12px; border: 1px solid #eee; padding: 6px 10px; border-radius: 999px; background: #fff; }
+    .danger { border-color: #ffd1d1; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Lista de Casa Nova</h1>
+      <div class="topbar">
+        <input id="search" type="search" placeholder="Pesquisar item (ex: cafeteira, toalha, cama)..." />
+        <div class="row">
+          <div class="progress" aria-label="Progresso total"><div class="bar" id="bar"></div></div>
+          <span class="pill" id="summary">0 de 0</span>
+          <button id="checkAll">Marcar tudo filtrado</button>
+          <button id="uncheckAll">Desmarcar tudo filtrado</button>
+          <button id="exportBtn">Exportar backup</button>
+          <button id="importBtn">Importar backup</button>
+          <button id="resetBtn" class="danger">Zerar tudo</button>
+          <input id="fileInput" type="file" accept="application/json" style="display:none" />
+        </div>
+        <div class="muted">Salva automaticamente no seu aparelho. Se você abrir neste mesmo navegador, continua de onde parou.</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <div class="footer">Dica: use “Exportar backup” antes de trocar de celular ou computador.</div>
+
+  <script>
+    const DATA = [
+      {
+        section: "Cozinha",
+        items: [
+          "Geladeira",
+          "Fogão ou cooktop",
+          "Micro-ondas",
+          "Liquidificador",
+          "Batedeira",
+          "Torradeira",
+          "Cafeteira",
+          "Processador de alimentos",
+          "Panela elétrica de arroz",
+          "Air fryer",
+          "Panelas de diferentes tamanhos",
+          "Frigideiras",
+          "Formas para bolo e assadeiras",
+          "Talheres",
+          "Facas de cozinha",
+          "Tábuas de corte",
+          "Colheres de pau e espátulas",
+          "Peneiras e escorredores",
+          "Tigelas e batedores de ovos",
+          "Conchas, escumadeiras e pegadores",
+          "Pratos (rasos, fundos e sobremesa)",
+          "Copos e taças (água, vinho, cerveja)",
+          "Xícaras e pires",
+          "Potes para armazenamento",
+          "Jarras e garrafas térmicas",
+          "Guardanapos e porta guardanapos",
+          "Jogos americanos e toalhas de mesa"
+        ]
+      },
+      {
+        section: "Sala",
+        items: [
+          "Sofá",
+          "Poltronas",
+          "Mesa de centro",
+          "Estante ou rack para TV",
+          "Mesa de jantar e cadeiras",
+          "Aparador",
+          "Tapetes",
+          "Almofadas",
+          "Cortinas ou persianas",
+          "Luminárias e abajures",
+          "Quadros e espelhos",
+          "Plantas e vasos decorativos"
+        ]
+      },
+      {
+        section: "Quarto",
+        items: [
+          "Cama (box, colchão)",
+          "Cabeceira",
+          "Criados-mudos",
+          "Guarda-roupa ou closet",
+          "Cômoda",
+          "Jogos de lençol",
+          "Edredons e cobertores",
+          "Travesseiros",
+          "Almofadas decorativas",
+          "Protetor de colchão"
+        ]
+      },
+      {
+        section: "Banheiro",
+        items: [
+          "Toalhas de banho e rosto",
+          "Tapetes de banheiro",
+          "Cortina de chuveiro",
+          "Porta sabonete e porta escova",
+          "Espelho",
+          "Cesto de roupa suja",
+          "Escova de vaso sanitário",
+          "Prateleiras ou armários para armazenamento",
+          "Kit de primeiros socorros"
+        ]
+      },
+      {
+        section: "Lavanderia",
+        items: [
+          "Máquina de lavar roupa",
+          "Secadora (opcional)",
+          "Ferro de passar roupa",
+          "Tábua de passar roupa",
+          "Cesto de roupas",
+          "Pregadores e varal",
+          "Produtos de limpeza",
+          "Baldes e bacias",
+          "Aspirador de pó",
+          "Vassouras e rodos",
+          "Panos de chão e de limpeza",
+          "Esponjas e escovas",
+          "Baldes",
+          "Produtos de limpeza diversos"
+        ]
+      }
+    ];
+
+    const STORAGE_KEY = "lista_casa_nova_v1";
+    const grid = document.getElementById("grid");
+    const search = document.getElementById("search");
+    const summary = document.getElementById("summary");
+    const bar = document.getElementById("bar");
+
+    function uid(section, item) {
+      return `${section}::${item}`.toLowerCase();
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveState(state) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    let state = loadState();
+
+    function render() {
+      const q = search.value.trim().toLowerCase();
+      grid.innerHTML = "";
+
+      let totalVisible = 0;
+      let checkedVisible = 0;
+
+      for (const block of DATA) {
+        const card = document.createElement("section");
+        card.className = "card";
+
+        const h2 = document.createElement("h2");
+        h2.textContent = block.section;
+        card.appendChild(h2);
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        card.appendChild(meta);
+
+        let sectionTotal = 0;
+        let sectionChecked = 0;
+
+        for (const item of block.items) {
+          const id = uid(block.section, item);
+          const matches = !q || item.toLowerCase().includes(q) || block.section.toLowerCase().includes(q);
+          if (!matches) continue;
+
+          totalVisible++;
+          sectionTotal++;
+
+          const row = document.createElement("div");
+          row.className = "item";
+
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = Boolean(state[id]);
+          cb.addEventListener("change", () => {
+            state[id] = cb.checked;
+            saveState(state);
+            updateProgress();
+            render(); // mantém contagens por seção atualizadas
+          });
+
+          const label = document.createElement("label");
+          label.textContent = item;
+
+          row.appendChild(cb);
+          row.appendChild(label);
+          card.appendChild(row);
+
+          if (cb.checked) {
+            checkedVisible++;
+            sectionChecked++;
+          }
+        }
+
+        meta.textContent = sectionTotal
+          ? `${sectionChecked} de ${sectionTotal} marcados (no filtro atual)`
+          : "Sem itens no filtro atual";
+
+        grid.appendChild(card);
+      }
+
+      updateProgress(totalVisible, checkedVisible);
+    }
+
+    function updateProgress(totalVisibleOverride, checkedVisibleOverride) {
+      const q = search.value.trim().toLowerCase();
+      let total = 0;
+      let checked = 0;
+
+      for (const block of DATA) {
+        for (const item of block.items) {
+          const matches = !q || item.toLowerCase().includes(q) || block.section.toLowerCase().includes(q);
+          if (!matches) continue;
+          total++;
+          if (state[uid(block.section, item)]) checked++;
+        }
+      }
+
+      if (typeof totalVisibleOverride === "number") total = totalVisibleOverride;
+      if (typeof checkedVisibleOverride === "number") checked = checkedVisibleOverride;
+
+      summary.textContent = `${checked} de ${total}`;
+      const pct = total ? Math.round((checked / total) * 100) : 0;
+      bar.style.width = `${pct}%`;
+      bar.setAttribute("aria-valuenow", String(pct));
+    }
+
+    function forEachVisibleItem(fn) {
+      const q = search.value.trim().toLowerCase();
+      for (const block of DATA) {
+        for (const item of block.items) {
+          const matches = !q || item.toLowerCase().includes(q) || block.section.toLowerCase().includes(q);
+          if (!matches) continue;
+          fn(block.section, item);
+        }
+      }
+    }
+
+    document.getElementById("checkAll").addEventListener("click", () => {
+      forEachVisibleItem((section, item) => { state[uid(section, item)] = true; });
+      saveState(state);
+      render();
+    });
+
+    document.getElementById("uncheckAll").addEventListener("click", () => {
+      forEachVisibleItem((section, item) => { state[uid(section, item)] = false; });
+      saveState(state);
+      render();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      const ok = confirm("Tem certeza que quer zerar tudo?");
+      if (!ok) return;
+      state = {};
+      saveState(state);
+      render();
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        state
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "backup-lista-casa-nova.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+    });
+
+    const fileInput = document.getElementById("fileInput");
+    document.getElementById("importBtn").addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        if (!payload || typeof payload !== "object" || !payload.state) {
+          alert("Arquivo inválido.");
+          return;
+        }
+        state = payload.state;
+        saveState(state);
+        render();
+      } catch {
+        alert("Não foi possível importar este arquivo.");
+      } finally {
+        fileInput.value = "";
+      }
+    });
+
+    search.addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>
