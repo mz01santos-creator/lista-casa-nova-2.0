@@ -1,19 +1,27 @@
 export async function onRequest({ request, env }) {
   const KEY = "global_state_v1";
 
+  // garante que o KV está ligado ao Pages
   if (!env.LISTA_CASA_NOVA) {
     return new Response("KV não configurado", { status: 500 });
   }
 
+  // GET → retorna o estado salvo
   if (request.method === "GET") {
     const data = await env.LISTA_CASA_NOVA.get(KEY);
     return new Response(data || "{}", {
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store"
+      }
     });
   }
 
+  // PUT → salva o estado
   if (request.method === "PUT") {
     const body = await request.text();
+
+    // valida JSON
     try {
       JSON.parse(body);
     } catch {
