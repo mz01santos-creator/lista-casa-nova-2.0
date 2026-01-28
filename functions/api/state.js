@@ -1,0 +1,28 @@
+export async function onRequest({ request, env }) {
+  const KEY = "global_state_v1";
+
+  if (!env.LISTA_CASA_NOVA) {
+    return new Response("KV não configurado", { status: 500 });
+  }
+
+  if (request.method === "GET") {
+    const data = await env.LISTA_CASA_NOVA.get(KEY);
+    return new Response(data || "{}", {
+      headers: { "Content-Type": "application/json; charset=utf-8" }
+    });
+  }
+
+  if (request.method === "PUT") {
+    const body = await request.text();
+    try {
+      JSON.parse(body);
+    } catch {
+      return new Response("JSON inválido", { status: 400 });
+    }
+
+    await env.LISTA_CASA_NOVA.put(KEY, body);
+    return new Response("ok", { status: 200 });
+  }
+
+  return new Response("Método não permitido", { status: 405 });
+}
